@@ -1,0 +1,166 @@
+
+******************** 建议的python命名规范 ********************
+
+Python之父Guido推荐的命名规范包括如下几点：
+模块名和包名采用小写字母并且以下划线分隔单词的形式；
+类名采用以大写字母开头，并且以大写字母分隔单词的形式命名；
+全局或者类常量，全部使用大写字母，并且以下划线分隔单词；其余变量命名则是采用全部小写字母，并且以下划线分隔单词的形式命名。
+以上的内容如果是内部的，则使用下划线开头命名。
+
+具体来说，建议如下：
+模块名：
+小写字母，单词之间用_分割
+ad_stats.py
+
+包名：
+和模块名一样
+
+类名：
+单词首字母大写
+AdStats
+ConfigUtil
+
+全局变量名（类变量，在java中相当于static变量）：
+大写字母，单词之间用_分割
+NUMBER
+COLOR_WRITE
+
+普通变量：
+小写字母，单词之间用_分割
+this_is_a_var
+
+实例变量：
+以_开头，其他和普通变量一样
+_price    
+_instance_var
+
+私有实例变量（外部访问会报错）：
+以__开头（2个下划线），其他和普通变量一样
+__private_var
+
+专有变量：
+__开头，__结尾，一般为python的自有变量，不要以这种方式命名
+__doc__
+__class__
+
+普通函数：
+和普通变量一样：
+get_name()
+count_number()
+ad_stat()
+
+私有函数（外部访问会报错）：
+以__开头（2个下划线），其他和普通函数一样
+__get_name()
+
+
+******************** python包和模块组织研究 ********************
+
+一个python包就是一个目录，下面还可以有各种子目录，参考PEP328：
+https://www.python.org/dev/peps/pep-0328/
+其中说明了：
+import <xxx>
+代表的都是绝对引用，其中用到的包和模块一般都需要在python的系统配置目录中；
+from <xxx> import <yyy>
+代表的可以是相对引用或绝对引用；
+例如：
+from .moduleY import spam
+代表从文件当前目录的模块moduleY引入spam，点.开头的代表相对引用，
+一个点.代表当前目录，两个点..代表上级目录；
+
+编写一个自定义的包或子包，除了系统通用模块外，都应该是相对引用；
+
+模块中__name__变量代表模块在包的继承关系中的位置，如果其值是'__main__'，
+代表这个模块是直接执行的，而不是被import的。
+一般的，如果这个模块是被主程序以import pkg_xxx.mod_yyy引用的，
+则其__name__变量的值即为pkg_xxx.mod_yyy
+
+应该尽量使用：
+if __name__ == '__main__' :
+来判断是否直接执行这个模块，这个可以建议进入测试模式，打印出一些调试信息。
+
+1. 如何使一个目录变成包,如何import
+目录下放一个__init__.py文件(内容可以为空), import包内模块的时候使用"."分割, 比如import Apackage.Amodule
+
+2. __init__.py的__all__变量
+__all__指定的是指此包被import * 的时候, 哪些模块会被import进来
+例如：
+在__init__.py中, 写一行:
+__all__=['Effects','Filters','Utils']
+则以上3个模块会被import进来；
+
+3. __init__.py的__path__变量
+__path__指定了包的搜索路径
+
+python中如何获取当前执行的文件所在的目录：
+http://www.jb51.net/article/49035.htm
+
+
+******************** mysql数据库访问研究 ********************
+
+在如下网站查找到mysqlclient-1.3.7.tar.gz
+https://pypi.python.org
+
+下载此模块，可以支持Python3.5.1，将其存放到/root目录下；
+
+解压gz结尾的压缩文件：
+cd /root
+tar zxvf mysqlclient-1.3.7.tar.gz
+
+因为在安装python的mysqlclient-1.3.7时，需要配置mysql_config位置，
+这个文件要先安装mariadb-devel才会有：
+yum install mariadb-devel.x86_64
+
+默认的mysql_config的位置在：
+/usr/bin/mysql_config
+
+进入mysqlclient-1.3.7的解压目录：
+cd /root/mysqlclient-1.3.7
+vi site.cfg
+将mysql_config的配置取消注释，改为：
+mysql_config = /usr/bin/mysql_config
+
+执行安装：
+python3.5.1 setup.py build
+python3.5.1 setup.py install（不在root下要加sudo）
+
+没有报错即安装完毕。
+
+
+关于mysql字符集问题的参考：
+
+http://www.cnblogs.com/freewater/archive/2011/12/17/2289431.html
+
+
+
+
+
+
+******************** CSV模块研究 ********************
+
+参考：Python CSV模块使用实例
+http://www.jb51.net/article/63773.htm
+
+
+******************** python源文件编码 ********************
+
+为了在python源文件中添加中文注释或代码，一般需要修改源文件编码，
+具体参考：
+https://www.python.org/dev/peps/pep-0263/
+PEP 263 -- Defining Python Source Code Encodings
+
+我们一般使用文件头上第二行增加：
+# coding=utf-8
+第一行一般是定义python解释器，所以一般前两行应该为：
+#!/usr/bin/python
+# coding=utf-8
+
+
+
+
+
+python中的赋值和复制
+
+http://www.quke.org/log-212.html
+
+

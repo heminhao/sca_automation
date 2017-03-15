@@ -1,0 +1,20 @@
+﻿
+##################################################
+#
+#  Exception Definition
+#
+##################################################
+
+# Internal Exceptions Definition
+ScaInternalExceptions:
+    EI00001: "Meas_res_file_grp_id not found"
+    EI00002: "Create_table executed with no connection"
+    EI00003: "Connect again with an existing connection"
+    EI00004: "CloseDB without existing connection"
+    EI00005: "ChkActive without existing connection"
+    EI00006: "Db connection timeout and can't be reconnected"
+
+# Normal Exceptions Definition
+ScaNormalExceptions:
+    EN00001: "testen1"
+    EN00002: "testen2"

@@ -1,0 +1,24 @@
+﻿
+##################################################
+#
+#  零件测量及机加程序自动优化YAML异常信息定义
+#
+##################################################
+
+# 内部异常定义
+ScaInternalExceptions:
+    EI00001:
+        1: "Meas_res_file_grp_id Not Found"
+        2: "Meas_res_file_grp_id找不到"
+    EI00002:
+        1: "Create_table executed with no connection"
+        2: "测试"
+
+# 常规异常定义
+ScaNormalExceptions:
+    EN00001:
+        1: "testen1"
+        2: "测试en1"
+    EN00002:
+        1: "testen2"
+        2: "测试en2"

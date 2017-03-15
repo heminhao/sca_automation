@@ -1,0 +1,39 @@
+
+##################################################
+#
+#  零件测量及机加程序自动优化YAML全局配置参数
+#
+##################################################
+
+
+# 配置数据库连接参数
+CfgDatabaseConnection:
+    DatabaseHost: 192.168.142.128
+    DatabasePort: 3306
+    DatabaseName: demo_autocorr
+    DatabaseUser: root
+    DatabasePass: root123
+    DatabaseCharset: utf8
+
+# 系统行为全局控制参数
+SysGlobalControl:
+    # 数据库超时尝试重新连接次数
+    MaxDbReConnTryNums: 1
+    # 数据库超时尝试重新连接之间等待间隔时间（秒）
+    SleepTimeDbPerReConn: 3
+    MaxMeasResInsertBatch: 20
+
+# 全球化语言代码定义
+LanguageCodeDef:
+    1:
+        Desc: English
+        Abbr: en
+    2:
+        Desc: 简体中文
+        Abbr: cn
+    3:
+        Desc: 繁體中文
+        Abbr: cht
+
+# 默认语言
+DefaultLangCode: 1
