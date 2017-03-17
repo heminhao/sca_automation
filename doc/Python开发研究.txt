@@ -169,4 +169,13 @@ http://www.quke.org/log-212.html
 
 非常有用的.gitignore文件：
 https://github.com/github/gitignore
+.gitignore可以放在项目的源文件目录中，建议也加入git仓库进行管理。
 
+git status
+git commit -m 'initial version'
+
+git ls-remote
+git remote
+git remote show origin
+
+git push origin
