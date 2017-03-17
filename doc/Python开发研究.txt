@@ -164,3 +164,9 @@ python中的赋值和复制
 http://www.quke.org/log-212.html
 
 
+
+******************** git经验 ********************
+
+非常有用的.gitignore文件：
+https://github.com/github/gitignore
+
