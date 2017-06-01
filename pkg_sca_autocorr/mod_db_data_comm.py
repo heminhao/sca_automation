@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python3.5.1
+#!/usr/bin/python_curr
 # coding=utf-8
 
 import pkg_sca_autocorr.mod_global_param as g
