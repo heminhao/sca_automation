@@ -179,3 +179,19 @@ git remote
 git remote show origin
 
 git push origin
+
+
+******************** python中的有序字典：OrderedDict ********************
+
+https://docs.python.org/3/library/collections.html
+以添加顺序为序
+
+还可继承出新的各种序列的字典：
+http://www.oschina.net/question/565065_138898
+
+******************** python中的SQLAlchemy使用方法 ********************
+
+http://www.sqlalchemy.org/
+
+http://docs.sqlalchemy.org/en/rel_1_1/
+

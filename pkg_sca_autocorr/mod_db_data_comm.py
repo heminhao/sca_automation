@@ -4,6 +4,7 @@
 import pkg_sca_autocorr.mod_global_param as g
 import pkg_sca_autocorr.mod_use_exception as e
 import MySQLdb
+import collections
 import time
 
 class ClsDbDataComm(object) :
@@ -11,12 +12,12 @@ class ClsDbDataComm(object) :
     def __init__(self, t_db_conn_mode) :
     
         #self.m_db_conn_mode = t_db_conn_mode
-        self.m_db_host_ip = g.G_DB_HOST_IP
-        self.m_db_host_port = g.G_DB_HOST_PORT
-        self.m_db_name = g.G_DB_NAME
-        self.m_db_user = g.G_DB_USER
-        self.m_db_pass = g.G_DB_PASS
-        self.m_db_charset = g.G_DB_CHARSET
+        self.m_db_host_ip = g.g_sca.CfgDatabaseConnection.DatabaseHost
+        self.m_db_host_port = g.g_sca.CfgDatabaseConnection.DatabasePort
+        self.m_db_name = g.g_sca.CfgDatabaseConnection.DatabaseName
+        self.m_db_user = g.g_sca.CfgDatabaseConnection.DatabaseUser
+        self.m_db_pass = g.g_sca.CfgDatabaseConnection.DatabasePass
+        self.m_db_charset = g.g_sca.CfgDatabaseConnection.DatabaseCharset
         # m_db_status为对象实例的数据库连接状态
         # 0表示未连接或连接已关闭
         # 1表示已执行connect成功连接
@@ -25,7 +26,7 @@ class ClsDbDataComm(object) :
     def conn_db(self) :
 
         if self.m_db_status!=0 :
-            e.G_CLS_EXP_DATA_OBJ.raise_exp_data("EI00003")
+            e.g_exp.raise_exp_data("EI00003")
         self.m_db_conn_obj = MySQLdb.connect(host=self.m_db_host_ip, port=self.m_db_host_port, db=self.m_db_name, \
             user=self.m_db_user, passwd=self.m_db_pass, charset=self.m_db_charset)
         self.m_db_status = 1
@@ -33,7 +34,7 @@ class ClsDbDataComm(object) :
     def close_db(self) :
         
         if self.m_db_status!=1 :
-            e.G_CLS_EXP_DATA_OBJ.raise_exp_data("EI00004")
+            e.g_exp.raise_exp_data("EI00004")
         self.m_db_conn_obj.commit()
         self.m_db_conn_obj.close()
         del self.m_db_conn_obj
@@ -42,14 +43,14 @@ class ClsDbDataComm(object) :
     def chk_active_conn(self) :
         
         if self.m_db_status!=1 :
-            e.G_CLS_EXP_DATA_OBJ.raise_exp_data("EI00005")
+            e.g_exp.raise_exp_data("EI00005")
         try:
             self.m_db_conn_obj.ping()
         except Exception as ept:
             try_cnt = 0
             succ_bit = 0
-            while try_cnt<MaxDbReConnTryNums :
-                time.sleep(SleepTimeDbPerReConn)
+            while try_cnt<g.g_sca.SysGlobalControl.MaxDbReConnTryNums :
+                time.sleep(g.g_sca.SysGlobalControl.SleepTimeDbPerReConn)
                 try:
                     self.m_db_conn_obj = MySQLdb.connect(host=self.m_db_host_ip, port=self.m_db_host_port, db=self.m_db_name, \
                         user=self.m_db_user, passwd=self.m_db_pass, charset=self.m_db_charset)
@@ -59,13 +60,16 @@ class ClsDbDataComm(object) :
                     pass
                 try_cnt = try_cnt + 1
             if succ_bit!=1 :
-                e.G_CLS_EXP_DATA_OBJ.raise_exp_data("EI00006")
+                e.g_exp.raise_exp_data("EI00006")
 
     # t_column_def : OrderedDict
+    # 参数说明：
+    # t_column_def : OrderedDict类型，按序存放字段定义
+    # t_drop_bit : 是否删除同名表，如果为Y则删除再建，如果为N则不允许同名，同名会报错
     def create_table(self, t_tab_name, t_column_def, t_drop_bit) :
         
         if self.m_db_status!=1 :
-            e.G_CLS_EXP_DATA_OBJ.raise_exp_data("EI00002")
+            e.g_exp.raise_exp_data("EI00002")
         tmp_cr_sql = "create table " + t_tab_name + " ( "
         tmp_first_bit = True
         for tmp_name,tmp_type in t_column_def.items() :
