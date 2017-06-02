@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python3.5.1
+#!/usr/bin/python_curr
 # coding=utf-8
 
 from . import mod_global_param
