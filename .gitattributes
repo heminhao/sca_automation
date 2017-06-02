@@ -6,6 +6,7 @@
 *.py text eol=lf
 *.yaml text eof=lf
 *.md text eof=lf
+*.sql text eof=lf
 
 # Denote all files that are truly binary and should not be modified.
 #*.png binary

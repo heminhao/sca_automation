@@ -1,7 +1,9 @@
 #!/usr/bin/python_curr
 # coding=utf-8
 
-from . import mod_global_param
+import pkg_sca_autocorr.mod_global_param
+import pkg_sca_autocorr.mod_use_exception
+import sqlalchemy as sy
 
 class ClsDumpMeas(object) :
 
