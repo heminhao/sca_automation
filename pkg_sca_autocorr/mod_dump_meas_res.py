@@ -15,7 +15,7 @@ class ClsDumpMeas(object) :
         self.m_meas_res_file_grp_id = t_meas_res_file_grp_id
         self.m_engine_str = 'mysql+pymysql://%s:%s@%s/%s?charset=%s' % \
                 (g.g_sca.CfgDatabaseConnection.DatabaseUser,g.g_sca.CfgDatabaseConnection.DatabasePass, \
-                g.g_sca.CfgDatabaseConnection.DatabaseHost,g.g_sca.CfgDatabaseConnection.DatabaseName \
+                g.g_sca.CfgDatabaseConnection.DatabaseHost,g.g_sca.CfgDatabaseConnection.DatabaseName, \
                 g.g_sca.CfgDatabaseConnection.DatabaseCharset)
         self.m_engine = sy.create_engine(self.m_engine_str)
         self.m_conn = self.m_engine.connect()
