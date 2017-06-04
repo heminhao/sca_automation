@@ -16,5 +16,5 @@ ScaInternalExceptions:
 
 # Normal Exceptions Definition
 ScaNormalExceptions:
-    EN00001: "testen1"
+    EN00001: "meas_res_format_id not defined"
     EN00002: "testen2"
