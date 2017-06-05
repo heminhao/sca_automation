@@ -4,6 +4,7 @@
 import pkg_sca_autocorr.mod_global_param as g
 import pkg_sca_autocorr.mod_use_exception as e
 import sqlalchemy as sy
+import os
 import io
 import csv
 import re
@@ -72,7 +73,7 @@ class ClsDumpMeas(object) :
         all_files = os.listdir(path = self.m_monitor_dir)
         # 以tab分隔的带标题行的csv文件格式
         if self.m_res_format_id == 1 :
-            save_func_name = 'save_file_todb_csvtab'
+            save_func_name = 'self.save_file_todb_csvtab'
         # 以逗号分隔的带标题行的csv文件格式（暂未实现）
         elif self.m_res_format_id == 2 :
             save_func_name = 'save_file_todb_csvcom'
@@ -82,4 +83,4 @@ class ClsDumpMeas(object) :
         for eachfile in all_files :
             chk_str = self.m_monitor_file_re.match(eachfile)
             if chk_str is not None :
-                eval(save_func_name)(self, self.m_monitor_dir + eachfile)
+                eval(save_func_name)(self.m_monitor_dir + eachfile)
