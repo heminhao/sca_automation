@@ -77,7 +77,7 @@ class ClsDumpMeas(object) :
         elif self.m_res_format_id == 2 :
             save_func_name = 'save_file_todb_csvcom'
         # 其它文件格式（报出异常）
-        else
+        else :
             save_func_name = 'save_file_todb_others'
         for eachfile in all_files :
             chk_str = self.m_monitor_file_re.match(eachfile)
