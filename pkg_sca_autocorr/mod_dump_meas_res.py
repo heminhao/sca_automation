@@ -42,10 +42,10 @@ class ClsDumpMeas(object) :
         readerdata = csv.DictReader(f, dialect='excel-tab')
         max_len = readerdata.fieldnames.__len__() - 2
         cr_tab_str = 'sy.Table(\'%s\', self.m_meta, ' % self.m_db_tab_name
-        cr_tab_str = cr_tab_str + 'Column(\'dump_log_id\',sy.Integer(),index=True), Column(\'line_num\',sy.BigInteger()), '
+        cr_tab_str = cr_tab_str + 'sy.Column(\'dump_log_id\',sy.Integer(),index=True), sy.Column(\'line_num\',sy.BigInteger()), '
         for i in range(max_len-1) :
-            cr_tab_str = cr_tab_str + 'Column(\'%s\',sy.Text()), ' % readerdata.fieldnames[i]
-        cr_tab_str = cr_tab_str + ' Column(\'%s\',sy.Text()) )' % readerdata.fieldnames[max_len]
+            cr_tab_str = cr_tab_str + 'sy.Column(\'%s\',sy.Text()), ' % readerdata.fieldnames[i]
+        cr_tab_str = cr_tab_str + ' sy.Column(\'%s\',sy.Text()) )' % readerdata.fieldnames[max_len]
         dyn_tab_obj = eval(cr_tab_str)
         self.m_meta.create_all(self.m_engine)
         v_dump_log_id = self.m_seq_dump_log.next_value()
