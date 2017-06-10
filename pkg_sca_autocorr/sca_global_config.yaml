@@ -15,6 +15,10 @@ CfgDatabaseConnection:
     DatabasePass: root123
     DatabaseCharset: utf8
 
+# 配置数据库具体细节参数
+CfgDbParam:
+    SeqDumpLogName: seq_dump_log_id
+
 # 系统行为全局控制参数
 SysGlobalControl:
     # 数据库超时尝试重新连接次数

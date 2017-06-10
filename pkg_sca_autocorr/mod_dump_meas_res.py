@@ -21,7 +21,7 @@ class ClsDumpMeas(object) :
         self.m_engine = sy.create_engine(self.m_engine_str)
         self.m_conn = self.m_engine.connect()
         self.m_meta = sy.MetaData()
-        self.m_seq_dump_log = sy.Sequence('seq_dump_log_id', metadata=self.m_meta)
+        self.m_seq_dump_log_name = g.g_sca.CfgDbParam.SeqDumpLogName
         self.m_tab_meas_res_grp = sy.Table('msca_meas_res_file_grp_store', self.m_meta, autoload=True, autoload_with=self.m_engine)
         tmp_sql = sy.sql.select([self.m_tab_meas_res_grp]).where(self.m_tab_meas_res_grp.c.meas_res_file_grp_id == self.m_meas_res_file_grp_id)
         tmp_rp = self.m_conn.execute(tmp_sql)
@@ -48,7 +48,7 @@ class ClsDumpMeas(object) :
         cr_tab_str = cr_tab_str + ' sy.Column(\'%s\',sy.Text()) )' % readerdata.fieldnames[max_len]
         dyn_tab_obj = eval(cr_tab_str)
         self.m_meta.create_all(self.m_engine)
-        v_dump_log_id = self.m_seq_dump_log.next_value()
+        v_dump_log_id = self.m_conn.execute('select get_seq_nextval(\'' + self.m_seq_dump_log_name + '\') from dual').fetchone()[0]
         ins_stat = dyn_tab_obj.insert()
         for rec in readerdata :
             ins_data = rec
