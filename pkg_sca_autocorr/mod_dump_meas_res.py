@@ -25,11 +25,11 @@ class ClsDumpMeas(object) :
         self.m_tab_meas_res_grp = sy.Table('msca_meas_res_file_grp_store', self.m_meta, autoload=True, autoload_with=self.m_engine)
         tmp_sql = sy.sql.select([self.m_tab_meas_res_grp]).where(self.m_tab_meas_res_grp.c.meas_res_file_grp_id == self.m_meas_res_file_grp_id)
         tmp_rp = self.m_conn.execute(tmp_sql)
-        self.m_row_meas_res_grp = tmp_rp.fetchone()
+        self.m_row_meas_res_grp = tmp_rp.first()
         self.m_tab_meas_res_type = sy.Table('sca_meas_res_type_def', self.m_meta, autoload=True, autoload_with=self.m_engine)
         tmp_sql = sy.sql.select([self.m_tab_meas_res_type]).where(self.m_tab_meas_res_type.c.meas_res_type_id == self.m_row_meas_res_grp['meas_res_type_id'])
         tmp_rp = self.m_conn.execute(tmp_sql)
-        self.m_row_meas_res_type = tmp_rp.fetchone()
+        self.m_row_meas_res_type = tmp_rp.first()
         self.m_tab_meas_dump_log = sy.Table('msca_meas_res_file_dump_log', self.m_meta, autoload=True, autoload_with=self.m_engine)
         self.m_monitor_dir = self.m_row_meas_res_grp['file_loc_dir']
         self.m_monitor_file_re = re.compile(self.m_row_meas_res_grp['filename_re_pattern'])
@@ -48,7 +48,7 @@ class ClsDumpMeas(object) :
         cr_tab_str = cr_tab_str + ' sy.Column(\'%s\',sy.Text()) )' % readerdata.fieldnames[max_len]
         dyn_tab_obj = eval(cr_tab_str)
         self.m_meta.create_all(self.m_engine)
-        v_dump_log_id = self.m_conn.execute('select get_seq_nextval(\'' + self.m_seq_dump_log_name + '\') from dual').fetchone()[0]
+        v_dump_log_id = self.m_conn.execute('select get_seq_nextval(\'' + self.m_seq_dump_log_name + '\') from dual').first()[0]
         ins_stat = dyn_tab_obj.insert()
         for rec in readerdata :
             ins_data = rec
