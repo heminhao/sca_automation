@@ -11,7 +11,7 @@ import re
 
 def trim_bracket(t_ori_str) :
     
-    tmp_str = t.ori_str.strip()
+    tmp_str = t_ori_str.strip()
     if (tmp_str[0]!='[') or (tmp_str[-1]!=']') :
         e.g_exp.raise_exp_data('EI00007')
     return tmp_str[1:-1]
