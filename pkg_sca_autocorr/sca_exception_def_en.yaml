@@ -13,6 +13,7 @@ ScaInternalExceptions:
     EI00004: "CloseDB without existing connection"
     EI00005: "ChkActive without existing connection"
     EI00006: "Db connection timeout and can't be reconnected"
+    EI00007: "Str does not contain bracket"
 
 # Normal Exceptions Definition
 ScaNormalExceptions:
