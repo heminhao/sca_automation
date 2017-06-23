@@ -16,6 +16,10 @@ def trim_bracket(t_ori_str) :
         e.g_exp.raise_exp_data('EI00007')
     return tmp_str[1:-1]
 
+def text_to_float(t_ori_str) :
+    
+    return float(t_ori_str) if (t_ori_str is not None) else None
+
 class ClsOptAdj(object) :
 
     def __init__(self, t_dump_log_id) :
@@ -79,16 +83,20 @@ class ClsOptAdj(object) :
             tmp_sig_row = {}
             tmp_sig_rp = self.m_conn.execute(tmp_alias_sql, d_key_str=trim_bracket(tmp_rec.key_field_item))
             tmp_alias_row = tmp_sig_rp.first()
+            if tmp_alias_row is None :
+                e.g_exp.raise_exp_data('EN00002')
             tmp_data_rp = self.m_conn.execute(tmp_data_sql, d_key_id=tmp_alias_row['key_field_data'])
             tmp_data_row = tmp_data_rp.first()
+            if tmp_data_row is None :
+                e.g_exp.raise_exp_data('EN00003')
             tmp_sig_row['key_field_alias'] = tmp_alias_row['key_field_alias']
             tmp_sig_row['key_field_data'] = tmp_alias_row['key_field_data']
             tmp_sig_row['key_field_opt_weight'] = tmp_rec.key_field_opt_weight
-            tmp_sig_row['act_field_value'] = float(tmp_data_row[self.m_act_field_id])
-            tmp_sig_row['nom_field_value'] = float(tmp_data_row[self.m_nom_field_id])
-            tmp_sig_row['lowertol_field_value'] = float(tmp_data_row[self.m_lowertol_field_id])
-            tmp_sig_row['uppertol_field_value'] = float(tmp_data_row[self.m_uppertol_field_id])
-            tmp_sig_row['diff_field_value'] = float(tmp_data_row[self.m_diff_field_id])
-            tmp_sig_row['exceed_field_value'] = float(tmp_data_row[self.m_exceed_field_id])
+            tmp_sig_row['act_field_value'] = text_to_float(tmp_data_row[self.m_act_field_id])
+            tmp_sig_row['nom_field_value'] = text_to_float(tmp_data_row[self.m_nom_field_id])
+            tmp_sig_row['lowertol_field_value'] = text_to_float(tmp_data_row[self.m_lowertol_field_id])
+            tmp_sig_row['uppertol_field_value'] = text_to_float(tmp_data_row[self.m_uppertol_field_id])
+            tmp_sig_row['diff_field_value'] = text_to_float(tmp_data_row[self.m_diff_field_id])
+            tmp_sig_row['exceed_field_value'] = text_to_float(tmp_data_row[self.m_exceed_field_id])
             meas_grp_var_dict[tmp_rec.res_grp_detail_id] = tmp_sig_row
         return meas_grp_var_dict

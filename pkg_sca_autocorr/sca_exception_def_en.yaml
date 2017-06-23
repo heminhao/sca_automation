@@ -18,4 +18,5 @@ ScaInternalExceptions:
 # Normal Exceptions Definition
 ScaNormalExceptions:
     EN00001: "meas_res_format_id not defined"
-    EN00002: "testen2"
+    EN00002: "config grp_detail key_field_item not found"
+    EN00003: "data_file alias item not found"
