@@ -180,6 +180,8 @@ CREATE TABLE `sca_meas_res_type_def` (
   `meas_res_format_id` int(11) DEFAULT NULL, #测量结果格式ID，目前先填1，代表以tab分隔的带标题行的文件
   `meas_prg_id` int(11) DEFAULT NULL, #测量程序ID
   `key_field_col_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #测量条目字段ID
+  `act_field_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #实测值字段ID
+  `nom_field_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #名义值字段ID
   `lowertol_field_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #下公差字段ID
   `uppertol_field_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #上公差字段ID
   `diff_field_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #差异字段ID

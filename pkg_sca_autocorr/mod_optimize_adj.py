@@ -43,13 +43,24 @@ class ClsOptAdj(object) :
         tmp_row_res = tmp_rp.first()
         self.m_meas_res_type_id = tmp_row_res['meas_res_type_id']
         self.m_tab_data_file = sy.Table(tmp_row_res['full_db_tab_name'], self.m_meta, autoload=True, autoload_with=self.m_engine)
+        tmp_sql = sy.sql.select([self.m_tab_meas_res_type]).where(self.m_tab_meas_res_type.c.meas_res_type_id == self.m_meas_res_type_id)
+        tmp_rp = self.m_conn.execute(tmp_sql)
+        tmp_row_res = tmp_rp.first()
+        self.m_key_field_col_id = tmp_row_res['key_field_col_id']
+        self.m_act_field_id = tmp_row_res['act_field_id']
+        self.m_nom_field_id = tmp_row_res['nom_field_id']
+        self.m_lowertol_field_id = tmp_row_res['lowertol_field_id']
+        self.m_uppertol_field_id = tmp_row_res['uppertol_field_id']
+        self.m_diff_field_id = tmp_row_res['diff_field_id']
+        self.m_exceed_field_id = tmp_row_res['exceed_field_id']
 
     def opt_res_grp(self, t_res_grp_id) :
 
         tmp_sql = (sy.sql.select([self.m_tab_meas_res_grp_detail])
                    .where(self.m_tab_meas_res_grp_detail.c.res_grp_id == t_res_grp_id)
                    .order_by(self.m_tab_meas_res_grp_detail.c.res_grp_detail_id))
-        tmp_bind_param = sy.sql.bindparam('d_key_str',type_=sy.types.String)
+        tmp_bind_param = sy.sql.bindparam('d_key_str',type_=sy.String)
+        tmp_bind_id = sy.sql.bindparam('d_key_id',type_=sy.String)
         tmp_alias_sql = (sy.sql.select([self.m_tab_meas_res_field_alias])
                         .where(sy.and_(
                                        self.m_tab_meas_res_field_alias.c.meas_res_type_id == self.m_meas_res_type_id,
@@ -57,14 +68,27 @@ class ClsOptAdj(object) :
                                               self.m_tab_meas_res_field_alias.c.key_field_data == tmp_bind_param,
                                               self.m_tab_meas_res_field_alias.c.key_field_alias == tmp_bind_param)))
                         )
+        tmp_data_sql = (sy.sql.select([self.m_tab_data_file])
+                       .where(sy.and_(
+                                      self.m_tab_data_file.c.dump_log_id == self.m_dump_log_id,
+                                      sy.sql.literal_column(self.m_key_field_col_id, sy.String) == tmp_bind_id))
+                       )
         tmp_rp = self.m_conn.execute(tmp_sql)
         meas_grp_var_dict = {}
         for tmp_rec in tmp_rp :
             tmp_sig_row = {}
             tmp_sig_rp = self.m_conn.execute(tmp_alias_sql, d_key_str=trim_bracket(tmp_rec.key_field_item))
             tmp_alias_row = tmp_sig_rp.first()
+            tmp_data_rp = self.m_conn.execute(tmp_data_sql, d_key_id=tmp_alias_row['key_field_data'])
+            tmp_data_row = tmp_data_rp.first()
             tmp_sig_row['key_field_alias'] = tmp_alias_row['key_field_alias']
             tmp_sig_row['key_field_data'] = tmp_alias_row['key_field_data']
             tmp_sig_row['key_field_opt_weight'] = tmp_rec.key_field_opt_weight
+            tmp_sig_row['act_field_value'] = float(tmp_data_row[self.m_act_field_id])
+            tmp_sig_row['nom_field_value'] = float(tmp_data_row[self.m_nom_field_id])
+            tmp_sig_row['lowertol_field_value'] = float(tmp_data_row[self.m_lowertol_field_id])
+            tmp_sig_row['uppertol_field_value'] = float(tmp_data_row[self.m_uppertol_field_id])
+            tmp_sig_row['diff_field_value'] = float(tmp_data_row[self.m_diff_field_id])
+            tmp_sig_row['exceed_field_value'] = float(tmp_data_row[self.m_exceed_field_id])
             meas_grp_var_dict[tmp_rec.res_grp_detail_id] = tmp_sig_row
         return meas_grp_var_dict
