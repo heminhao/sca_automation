@@ -14,6 +14,7 @@ ScaInternalExceptions:
     EI00005: "ChkActive without existing connection"
     EI00006: "Db connection timeout and can't be reconnected"
     EI00007: "Str does not contain bracket"
+    EI00008: "convert to float data is not str"
 
 # Normal Exceptions Definition
 ScaNormalExceptions:

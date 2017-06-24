@@ -18,7 +18,15 @@ def trim_bracket(t_ori_str) :
 
 def text_to_float(t_ori_str) :
     
-    return float(t_ori_str) if (t_ori_str is not None) else None
+    if t_ori_str is None :
+        return None
+    if type(t_ori_str) is not str :
+        e.g_exp.raise_exp_data('EI00008')
+    tmp_str = t_ori_str.strip()
+    if tmp_str :
+        return float(tmp_str)
+    else :
+        return None
 
 class ClsOptAdj(object) :
 
