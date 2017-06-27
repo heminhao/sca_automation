@@ -9,6 +9,9 @@ import io
 import csv
 import re
 
+from sympy import symbols
+
+
 def trim_bracket(t_ori_str) :
     
     tmp_str = t_ori_str.strip()
@@ -71,15 +74,13 @@ class ClsOptAdj(object) :
         tmp_sql = (sy.sql.select([self.m_tab_meas_res_grp_detail])
                    .where(self.m_tab_meas_res_grp_detail.c.res_grp_id == t_res_grp_id)
                    .order_by(self.m_tab_meas_res_grp_detail.c.res_grp_detail_id))
-        tmp_bind_param = sy.sql.bindparam('d_key_str',type_=sy.String)
+        tmp_bind_str = sy.sql.bindparam('d_key_str',type_=sy.String)
         tmp_bind_id = sy.sql.bindparam('d_key_id',type_=sy.String)
-        tmp_alias_sql = (sy.sql.select([self.m_tab_meas_res_field_alias])
-                        .where(sy.and_(
-                                       self.m_tab_meas_res_field_alias.c.meas_res_type_id == self.m_meas_res_type_id,
-                                       sy.or_(
-                                              self.m_tab_meas_res_field_alias.c.key_field_data == tmp_bind_param,
-                                              self.m_tab_meas_res_field_alias.c.key_field_alias == tmp_bind_param)))
-                        )
+        tmp_alias_sql_str = (sy.sql.select([self.m_tab_meas_res_field_alias])
+                            .where(sy.and_(
+                                           self.m_tab_meas_res_field_alias.c.meas_res_type_id == self.m_meas_res_type_id,
+                                           self.m_tab_meas_res_field_alias.c.key_field_alias == tmp_bind_str))
+                            )
         tmp_data_sql = (sy.sql.select([self.m_tab_data_file])
                        .where(sy.and_(
                                       self.m_tab_data_file.c.dump_log_id == self.m_dump_log_id,
@@ -106,5 +107,48 @@ class ClsOptAdj(object) :
             tmp_sig_row['uppertol_field_value'] = text_to_float(tmp_data_row[self.m_uppertol_field_id])
             tmp_sig_row['diff_field_value'] = text_to_float(tmp_data_row[self.m_diff_field_id])
             tmp_sig_row['exceed_field_value'] = text_to_float(tmp_data_row[self.m_exceed_field_id])
+            tmp_sig_row['symbols_act'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'act')
+            tmp_sig_row['symbols_nom'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'nom')
+            tmp_sig_row['symbols_low'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'low')
+            tmp_sig_row['symbols_upp'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'upp')
+            tmp_sig_row['symbols_dif'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'dif')
+            tmp_sig_row['symbols_exc'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'exc')
             meas_grp_var_dict[tmp_rec.res_grp_detail_id] = tmp_sig_row
+        
+        restrict_rule_dict = {}
+        opt_rule_dict = {}
+        for tmp_det_key in meas_grp_var_dict :
+            tmp_rule_str = ''
+            if meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None :
+                tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' > ('
+                                + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                + meas_grp_var_dict[tmp_det_key]['symbols_low'].name + '))' )
+            if meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None :
+                if tmp_rule_str :
+                    tmp_rule_str = tmp_rule_str + ' & '
+                tmp_rule_str = tmp_rule_str + (
+                                   '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' < ('
+                                    + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                    + meas_grp_var_dict[tmp_det_key]['symbols_upp'].name + '))' )
+            if tmp_rule_str :
+                meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 1
+                restrict_rule_dict[tmp_det_key] = tmp_rule_str
+            else :
+                meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 0
+                
+            if meas_grp_var_dict[tmp_det_key]['key_field_opt_weight'] is not None :
+                if ((meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None) and
+                    (meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None)) :
+                        tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name
+                                        + ' - ((' + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
+                                        + ' + ' + meas_grp_var_dict[tmp_det_key]['symbols_low'].name
+                                        + ') + (' + meas_grp_var_dict[tmp_det_key]['symbols_upp'].name
+                                        + ' - ' + meas_grp_var_dict[tmp_det_key]['symbols_low'].name
+                                        + ')/2))**2' )
+                else :
+                    tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name
+                                    + ' - ' + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
+                                    + ')**2' )
+
+        
         return meas_grp_var_dict
