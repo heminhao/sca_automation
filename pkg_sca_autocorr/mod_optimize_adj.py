@@ -68,6 +68,14 @@ class ClsOptAdj(object) :
         self.m_uppertol_field_id = tmp_row_res['uppertol_field_id']
         self.m_diff_field_id = tmp_row_res['diff_field_id']
         self.m_exceed_field_id = tmp_row_res['exceed_field_id']
+        
+    def del_default_rule(self, t_rule_detail_type, t_rule_str) :
+        
+        tmp_grp_det_id = find_det_id(t_rule_str)
+        if t_rule_detail_type=='R' :
+            self.meas_grp_var_dict[tmp_grp_det_id]['restrict_bit'] = 0
+        elif t_rule_detail_type=='D' :
+            self.meas_grp_var_dict[tmp_grp_det_id]['opt_bit'] = 0
 
     def opt_res_grp(self, t_res_grp_id) :
 
@@ -77,17 +85,15 @@ class ClsOptAdj(object) :
         tmp_bind_str = sy.sql.bindparam('d_key_str',type_=sy.String)
         tmp_bind_id = sy.sql.bindparam('d_key_id',type_=sy.String)
         tmp_alias_sql_str = (sy.sql.select([self.m_tab_meas_res_field_alias])
-                            .where(sy.and_(
-                                           self.m_tab_meas_res_field_alias.c.meas_res_type_id == self.m_meas_res_type_id,
-                                           self.m_tab_meas_res_field_alias.c.key_field_alias == tmp_bind_str))
-                            )
+                             .where(sy.and_(
+                                            self.m_tab_meas_res_field_alias.c.meas_res_type_id == self.m_meas_res_type_id,
+                                            self.m_tab_meas_res_field_alias.c.key_field_alias == tmp_bind_str)))
         tmp_data_sql = (sy.sql.select([self.m_tab_data_file])
-                       .where(sy.and_(
-                                      self.m_tab_data_file.c.dump_log_id == self.m_dump_log_id,
-                                      sy.sql.literal_column(self.m_key_field_col_id, sy.String) == tmp_bind_id))
-                       )
+                        .where(sy.and_(
+                                       self.m_tab_data_file.c.dump_log_id == self.m_dump_log_id,
+                                       sy.sql.literal_column(self.m_key_field_col_id, sy.String) == tmp_bind_id)))
         tmp_rp = self.m_conn.execute(tmp_sql)
-        meas_grp_var_dict = {}
+        self.meas_grp_var_dict = {}
         for tmp_rec in tmp_rp :
             tmp_sig_row = {}
             tmp_sig_rp = self.m_conn.execute(tmp_alias_sql, d_key_str=trim_bracket(tmp_rec.key_field_item))
@@ -113,42 +119,56 @@ class ClsOptAdj(object) :
             tmp_sig_row['symbols_upp'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'upp')
             tmp_sig_row['symbols_dif'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'dif')
             tmp_sig_row['symbols_exc'] = symbols('x' + str(tmp_rec.res_grp_detail_id) + 'exc')
-            meas_grp_var_dict[tmp_rec.res_grp_detail_id] = tmp_sig_row
+            self.meas_grp_var_dict[tmp_rec.res_grp_detail_id] = tmp_sig_row
         
-        restrict_rule_dict = {}
-        opt_rule_dict = {}
-        for tmp_det_key in meas_grp_var_dict :
+        self.restrict_rule_dict = {}
+        self.opt_rule_dict = {}
+        for tmp_det_key in self.meas_grp_var_dict :
             tmp_rule_str = ''
-            if meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None :
-                tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' > ('
-                                + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
-                                + meas_grp_var_dict[tmp_det_key]['symbols_low'].name + '))' )
-            if meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None :
+            if self.meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None :
+                tmp_rule_str = ( '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' > ('
+                                + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                + self.meas_grp_var_dict[tmp_det_key]['symbols_low'].name + '))' )
+            if self.meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None :
                 if tmp_rule_str :
                     tmp_rule_str = tmp_rule_str + ' & '
                 tmp_rule_str = tmp_rule_str + (
-                                   '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' < ('
-                                    + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
-                                    + meas_grp_var_dict[tmp_det_key]['symbols_upp'].name + '))' )
+                                   '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' < ('
+                                    + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                    + self.meas_grp_var_dict[tmp_det_key]['symbols_upp'].name + '))' )
             if tmp_rule_str :
-                meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 1
-                restrict_rule_dict[tmp_det_key] = tmp_rule_str
+                self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 1
+                self.restrict_rule_dict[tmp_det_key] = tmp_rule_str
             else :
-                meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 0
+                self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 0
                 
-            if meas_grp_var_dict[tmp_det_key]['key_field_opt_weight'] is not None :
-                if ((meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None) and
-                    (meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None)) :
-                        tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name
-                                        + ' - ((' + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
-                                        + ' + ' + meas_grp_var_dict[tmp_det_key]['symbols_low'].name
-                                        + ') + (' + meas_grp_var_dict[tmp_det_key]['symbols_upp'].name
-                                        + ' - ' + meas_grp_var_dict[tmp_det_key]['symbols_low'].name
+            if self.meas_grp_var_dict[tmp_det_key]['key_field_opt_weight'] is not None :
+                if ((self.meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None) and
+                    (self.meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None)) :
+                        tmp_rule_str = ( '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name
+                                        + ' - ((' + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
+                                        + ' + ' + self.meas_grp_var_dict[tmp_det_key]['symbols_low'].name
+                                        + ') + (' + self.meas_grp_var_dict[tmp_det_key]['symbols_upp'].name
+                                        + ' - ' + self.meas_grp_var_dict[tmp_det_key]['symbols_low'].name
                                         + ')/2))**2' )
                 else :
-                    tmp_rule_str = ( '(' + meas_grp_var_dict[tmp_det_key]['symbols_act'].name
-                                    + ' - ' + meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
+                    tmp_rule_str = ( '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name
+                                    + ' - ' + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name
                                     + ')**2' )
-
+                self.meas_grp_var_dict[tmp_det_key]['opt_bit'] = 1
+                self.opt_rule_dict[tmp_det_key] = tmp_rule_str
+            else :
+                self.meas_grp_var_dict[tmp_det_key]['opt_bit'] = 0
+                
+        tmp_sql = (sy.sql.select([self.m_tab_meas_rule_detail])
+                   .where(sy.and_(
+                                  self.m_tab_meas_rule_detail.c.meas_res_type_id == self.m_meas_res_type_id,
+                                  self.m_tab_meas_rule_detail.c.res_grp_id == t_res_grp_id))
+                   .order_by(self.m_tab_meas_rule_detail.c.rule_detail_id))
+        tmp_rp = self.m_conn.execute(tmp_sql)
+        for tmp_rec in tmp_rp :
+            tmp_exp_str = str(tmp_rec.except_bit).strip()
+            if tmp_exp_str == 'E' :
+                del_default_rule(self, str(tmp_rec.rule_detail_type).strip(), tmp_rec.rule_detail_expr_str)
         
-        return meas_grp_var_dict
+        return self.meas_grp_var_dict
