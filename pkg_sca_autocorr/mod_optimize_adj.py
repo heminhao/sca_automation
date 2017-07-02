@@ -69,14 +69,36 @@ class ClsOptAdj(object) :
         self.m_diff_field_id = tmp_row_res['diff_field_id']
         self.m_exceed_field_id = tmp_row_res['exceed_field_id']
         
+    def find_det_id(self, t_rule_str) :
+        
+        tmp_str = trim_bracket(str(t_rule_str))
+        for tmp_det_key in self.meas_grp_var_dict :
+            if str(self.meas_grp_var_dict[tmp_det_key]['key_field_alias']).strip() == tmp_str :
+                return tmp_det_key
+        return 0
+    
+    def replace_rule_var(self, t_rule_str) :
+        
+        
     def del_default_rule(self, t_rule_detail_type, t_rule_str) :
         
-        tmp_grp_det_id = find_det_id(t_rule_str)
+        tmp_grp_det_id = find_det_id(self, t_rule_str)
+        if tmp_grp_det_id == 0 :
+            e.g_exp.raise_exp_data('EN00004')
         if t_rule_detail_type=='R' :
             self.meas_grp_var_dict[tmp_grp_det_id]['restrict_bit'] = 0
         elif t_rule_detail_type=='D' :
             self.meas_grp_var_dict[tmp_grp_det_id]['opt_bit'] = 0
+        else :
+            e.g_exp.raise_exp_data('EI00009')
 
+    def add_new_rule(self, t_rule_detail_id, t_rule_detail_type, t_rule_str) :
+        
+        if t_rule_detail_type=='R' :
+            self.restrict_add_rule_dict[t_rule_detail_id] = replace_rule_var(self, str(t_rule_str))
+        elif t_rule_detail_type=='D' :
+            self.opt_add_rule_dict[t_rule_detail_id] = replace_rule_var(self, str(t_rule_str))
+        
     def opt_res_grp(self, t_res_grp_id) :
 
         tmp_sql = (sy.sql.select([self.m_tab_meas_res_grp_detail])
@@ -170,5 +192,9 @@ class ClsOptAdj(object) :
             tmp_exp_str = str(tmp_rec.except_bit).strip()
             if tmp_exp_str == 'E' :
                 del_default_rule(self, str(tmp_rec.rule_detail_type).strip(), tmp_rec.rule_detail_expr_str)
+            elif tmp_exp_str :
+                e.g_exp.raise_exp_data('EI00009')
+            else :
+                add_new_rule(self, tmp_rec.rule_detail_id, str(tmp_rec.rule_detail_type).strip(), tmp_rec.rule_detail_expr_str)
         
         return self.meas_grp_var_dict

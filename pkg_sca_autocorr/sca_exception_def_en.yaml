@@ -15,9 +15,11 @@ ScaInternalExceptions:
     EI00006: "Db connection timeout and can't be reconnected"
     EI00007: "Str does not contain bracket"
     EI00008: "convert to float data is not str"
+    EI00009: "features do not be implemented"
 
 # Normal Exceptions Definition
 ScaNormalExceptions:
     EN00001: "meas_res_format_id not defined"
     EN00002: "config grp_detail key_field_item not found"
     EN00003: "data_file alias item not found"
+    EN00004: "except restrict key_field_alias not found"
