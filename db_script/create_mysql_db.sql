@@ -288,8 +288,8 @@ CREATE TABLE `sca_meas_data_corr_rule_detail_def` (
   # （R，E）：表达式的形式为[key_field_id]或[key_field_alias]，表示特定的测量条目内容默认限制规则不执行
   # （D，E）：表达式的形式为[key_field_id]或[key_field_alias]，表示特定的测量条目内容默认目标规则不执行
   # （A，E）：不允许，不存在这种组合
-  # （R，空）：表达式的形式为由[key_field_id].datatype、[key_field_alias].datatype、[atom_def_code]组成的条件表达式
-  #            例如：abs([key_field_alias].ACT-[key_field_alias].MIDDLE)<2
+  # （R，空）：表达式的形式为由[key_field_id].datatype、[key_field_alias].datatype、[atom_def_code]组成的算术表达式
+  #            例如：2-abs([key_field_alias].ACT-[key_field_alias].MIDDLE)，限制规则为该表达式>=0
   # （D，空）：表达式的形式为由[key_field_id].datatype、[key_field_alias].datatype、[atom_def_code]组成的算术表达式，
   #            优化目标为该算术表达式达到极小值。
   #            例如：abs([key_field_alias].ACT-[key_field_alias].MIDDLE)，

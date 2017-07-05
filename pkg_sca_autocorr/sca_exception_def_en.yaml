@@ -23,3 +23,4 @@ ScaNormalExceptions:
     EN00002: "config grp_detail key_field_item not found"
     EN00003: "data_file alias item not found"
     EN00004: "except restrict key_field_alias not found"
+    EN00005: "rule key_field_alias not found"

@@ -4,6 +4,7 @@
 import pkg_sca_autocorr.mod_global_param as g
 import pkg_sca_autocorr.mod_use_exception as e
 import sqlalchemy as sy
+import collections as cl
 import os
 import io
 import csv
@@ -76,9 +77,30 @@ class ClsOptAdj(object) :
             if str(self.meas_grp_var_dict[tmp_det_key]['key_field_alias']).strip() == tmp_str :
                 return tmp_det_key
         return 0
+
+    def find_op_adj_id(self, t_rule_str) :
+        
+        tmp_str = trim_bracket(str(t_rule_str))
+        for tmp_adj_key in self.op_adj_dict :
+            if str(self.op_adj_dict[tmp_adj_key]['op_code_str']).strip() == tmp_str :
+                return tmp_adj_key
+        return 0
     
     def replace_rule_var(self, t_rule_str) :
         
+        curr_rule_str = str(t_rule_str)
+        datatype_list = ('DIFF', 'EXCEED', 'ACT', 'NOM', 'UPPER', 'LOWER')
+        rep_str_list = ('symbols_dif', 'symbols_exc', 'symbols_act', 'symbols_nom', 'symbols_upp', 'symbols_low')
+        for i,tmp_dt in enumerate(datatype_list) :
+            var_pattern = r'\[[a-zA-Z0-9_]*\]\.' + tmp_dt
+            all_vars = re.findall(var_pattern, curr_rule_str)
+            for tmp_var in all_vars :
+                tmp_sig = str(tmp_var).rstrip('.' + tmp_dt)
+                tmp_det_id = find_det_id(self, tmp_sig)
+                if tmp_det_id == 0 :
+                    e.g_exp.raise_exp_data('EN00005')
+                curr_rule_str.replace(tmp_var, self.meas_grp_var_dict[tmp_det_id][rep_str_list[i]].name, 1)
+        return curr_rule_str
         
     def del_default_rule(self, t_rule_detail_type, t_rule_str) :
         
@@ -98,7 +120,71 @@ class ClsOptAdj(object) :
             self.restrict_add_rule_dict[t_rule_detail_id] = replace_rule_var(self, str(t_rule_str))
         elif t_rule_detail_type=='D' :
             self.opt_add_rule_dict[t_rule_detail_id] = replace_rule_var(self, str(t_rule_str))
+
+    def add_pre_var(self, t_delta_str) :
         
+        tmp_delta_str = str(t_delta_str)
+        for tmp_op_adj_key in self.op_adj_dict :
+            tmp_var_name = str(self.op_adj_dict[tmp_op_adj_key]['symbols_adj'].name)
+            if tmp_delta_str.find(tmp_var_name)>=0 :
+                tmp_exist_bit = 0
+                for tmp_id in self.pre_var :
+                    if str(self.pre_var[tmp_id].name) == tmp_var_name :
+                        tmp_exist_bit = 1
+                        break
+                if tmp_exist_bit == 0 :
+                    self.pre_var[self.pre_var_num] = self.op_adj_dict[tmp_op_adj_key]['symbols_adj']
+                    self.pre_var_num = self.pre_var_num + 1
+
+    def add_rule_con_var(self, t_rule_str) :
+        
+        tmp_rule_str = str(t_rule_str)
+        all_op_vars = re.findall(r'(x)([0-9]*)(act|nom|low|upp|dif|exc)', tmp_delta_expr)
+        for tmp_op_var in all_op_vars :
+            tmp_var = tmp_op_var[0] + tmp_op_var[1] + tmp_op_var[2]
+            tmp_det_id = int(tmp_op_var[1])
+            tmp_sym_name = 'symbols_' + tmp_op_var[2]
+            tmp_exist_bit = 0
+            for tmp_id in self.pre_con_var :
+                if str(self.pre_con_var[tmp_id].name) == tmp_var :
+                    tmp_exist_bit = 1
+                    break
+            if tmp_exist_bit == 0 :
+                self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key][tmp_sym_name]
+                self.pre_con_var_num + self.pre_con_var_num + 1
+
+    def scan_default_con(self, t_det_key, t_rule_expr) :
+        
+        tmp_rule_expr = str(t_rule_expr)
+        tmp_delta_str = str(self.meas_grp_var_dict[t_det_key]['delta_op_adj_expr'])
+        add_pre_var(self, tmp_delta_str)
+        new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
+        tmp_rule_expr.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
+        self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_act']
+        self.pre_con_var_num = self.pre_con_var_num + 1
+        if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_low'].name)>=0 :
+            self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_low']
+            self.pre_con_var_num = self.pre_con_var_num + 1
+        if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_upp'].name)>=0 :
+            self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_upp']
+            self.pre_con_var_num = self.pre_con_var_num + 1
+        return tmp_rule_expr
+
+    def scan_default_opt(self, t_det_key, t_rule_expr) :
+        
+        tmp_rule_str = str(t_rule_expr)
+        tmp_delta_str = str(self.meas_grp_var_dict[t_det_key]['delta_op_adj_expr'])
+        add_pre_var(self, tmp_delta_str)
+        new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
+        tmp_rule_str.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
+        add_rule_con_var(self, tmp_rule_str)
+        return '(' + str(self.meas_grp_var_dict[t_det_key]['key_field_opt_weight']) + '*(' + tmp_rule_str + '))'
+
+    def scan_custom_rule(self, t_rule_expr) :
+        
+        curr_rule_str = str(t_rule_expr)
+        tmp_act_var = re.search(r'(x)([0-9]*)(act)', curr_rule_str)
+
     def opt_res_grp(self, t_res_grp_id) :
 
         tmp_sql = (sy.sql.select([self.m_tab_meas_res_grp_detail])
@@ -115,7 +201,7 @@ class ClsOptAdj(object) :
                                        self.m_tab_data_file.c.dump_log_id == self.m_dump_log_id,
                                        sy.sql.literal_column(self.m_key_field_col_id, sy.String) == tmp_bind_id)))
         tmp_rp = self.m_conn.execute(tmp_sql)
-        self.meas_grp_var_dict = {}
+        self.meas_grp_var_dict = cl.OrderedDict()
         for tmp_rec in tmp_rp :
             tmp_sig_row = {}
             tmp_sig_rp = self.m_conn.execute(tmp_alias_sql, d_key_str=trim_bracket(tmp_rec.key_field_item))
@@ -146,24 +232,21 @@ class ClsOptAdj(object) :
         self.restrict_rule_dict = {}
         self.opt_rule_dict = {}
         for tmp_det_key in self.meas_grp_var_dict :
-            tmp_rule_str = ''
+            tmp_rule_dict = {}
+            self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 0
             if self.meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None :
-                tmp_rule_str = ( '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' > ('
-                                + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
-                                + self.meas_grp_var_dict[tmp_det_key]['symbols_low'].name + '))' )
-            if self.meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None :
-                if tmp_rule_str :
-                    tmp_rule_str = tmp_rule_str + ' & '
-                tmp_rule_str = tmp_rule_str + (
-                                   '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' < ('
-                                    + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
-                                    + self.meas_grp_var_dict[tmp_det_key]['symbols_upp'].name + '))' )
-            if tmp_rule_str :
                 self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 1
-                self.restrict_rule_dict[tmp_det_key] = tmp_rule_str
-            else :
-                self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 0
-                
+                tmp_rule_dict[0] = ( '(' + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ' - ('
+                                   + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                   + self.meas_grp_var_dict[tmp_det_key]['symbols_low'].name + '))' )
+            if self.meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None :
+                self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] = 1
+                tmp_rule_dict[1] = ( '((' + self.meas_grp_var_dict[tmp_det_key]['symbols_nom'].name + ' + '
+                                   + self.meas_grp_var_dict[tmp_det_key]['symbols_upp'].name + ') - '
+                                   + self.meas_grp_var_dict[tmp_det_key]['symbols_act'].name + ')' )
+            if self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] == 1 :
+                self.restrict_rule_dict[tmp_det_key] = tmp_rule_dict
+
             if self.meas_grp_var_dict[tmp_det_key]['key_field_opt_weight'] is not None :
                 if ((self.meas_grp_var_dict[tmp_det_key]['lowertol_field_value'] is not None) and
                     (self.meas_grp_var_dict[tmp_det_key]['uppertol_field_value'] is not None)) :
@@ -188,6 +271,8 @@ class ClsOptAdj(object) :
                                   self.m_tab_meas_rule_detail.c.res_grp_id == t_res_grp_id))
                    .order_by(self.m_tab_meas_rule_detail.c.rule_detail_id))
         tmp_rp = self.m_conn.execute(tmp_sql)
+        self.restrict_add_rule_dict = cl.OrderedDict()
+        self.opt_add_rule_dict = cl.OrderedDict()
         for tmp_rec in tmp_rp :
             tmp_exp_str = str(tmp_rec.except_bit).strip()
             if tmp_exp_str == 'E' :
@@ -196,5 +281,71 @@ class ClsOptAdj(object) :
                 e.g_exp.raise_exp_data('EI00009')
             else :
                 add_new_rule(self, tmp_rec.rule_detail_id, str(tmp_rec.rule_detail_type).strip(), tmp_rec.rule_detail_expr_str)
+                
+        tmp_sql = (sy.sql.select([self.m_tab_meas_grp_op])
+                   .where(sy.and_(
+                                  self.m_tab_meas_grp_op.c.meas_res_type_id == self.m_meas_res_type_id,
+                                  self.m_tab_meas_grp_op.c.res_grp_id == t_res_grp_id))
+                   .order_by(self.m_tab_meas_grp_op.c.op_adj_id))
+        tmp_rp = self.m_conn.execute(tmp_sql)
+        self.op_adj_dict = cl.OrderedDict()
+        for tmp_rec in tmp_rp :
+            tmp_sig_row['op_adj_id'] = tmp_rec.op_adj_id
+            tmp_sig_row['op_code_str'] = tmp_rec.op_code_str
+            tmp_sig_row['op_detail_type'] = tmp_rec.op_detail_type
+            tmp_sig_row['op_prg_id'] = tmp_rec.op_prg_id
+            tmp_sig_row['op_prg_pos_tag'] = tmp_rec.op_prg_pos_tag
+            tmp_sig_row['coordinates_id'] = tmp_rec.coordinates_id
+            tmp_sig_row['dest_axis_direction'] = tmp_rec.dest_axis_direction
+            tmp_sig_row['symbols_adj'] = symbols('op' + str(tmp_rec.op_adj_id) + 'adj')
+            op_adj_dict[tmp_rec.op_adj_id] = tmp_sig_row
+            
+        tmp_sql = (sy.sql.select([self.m_tab_meas_delta_val])
+                   .where(sy.and_(
+                                  self.m_tab_meas_delta_val.c.meas_res_type_id == self.m_meas_res_type_id,
+                                  self.m_tab_meas_delta_val.c.res_grp_id == t_res_grp_id))
+                   .order_by(self.m_tab_meas_delta_val.c.meas_delta_def_id))
+        tmp_rp = self.m_conn.execute(tmp_sql)
+        for tmp_rec in tmp_rp :
+            tmp_delta_str = str(tmp_rec.delta_key_field_item)
+            tmp_det_id = find_det_id(self, re.sub(r'(D)(\[[a-zA-Z0-9_]*\])',r'\2',tmp_delta_str))
+            tmp_delta_expr = str(tmp_rec.delta_rely_op_str)
+            all_op_vars = re.findall(r'(D)(\[[a-zA-Z0-9_]*\])', tmp_delta_expr)
+            for tmp_op_var in all_op_vars :
+                tmp_op_adj_id = find_op_adj_id(self, tmp_op_var[1])
+                tmp_delta_expr.replace(tmp_op_var[0]+tmp_op_var[1], self.op_adj_dict[tmp_op_adj_id]['symbols_adj'].name, 1)
+            self.meas_grp_var_dict[tmp_det_id]['delta_op_adj_expr'] = tmp_delta_expr
         
-        return self.meas_grp_var_dict
+        # 优化约束条件字典
+        self.pre_res_con = cl.OrderedDict()
+        self.pre_res_con_num = 0
+        # 优化变量字典
+        self.pre_var = cl.OrderedDict()
+        self.pre_var_num = 0
+        # 优化常量（即测量文件中已有数值的）字典
+        self.pre_con_var = cl.OrderedDict()
+        self.pre_con_var_num = 0
+        # 优化目标字符串表达式
+        self.total_opt_str = ''
+        for tmp_det_key in self.meas_grp_var_dict :
+            if self.meas_grp_var_dict[t_det_key].has_key('delta_op_adj_expr') :
+                if self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] == 1 :
+                    if self.restrict_rule_dict[tmp_det_key].has_key(0) :
+                        self.pre_res_con[self.pre_res_con_num] = scan_default_con(self, tmp_det_key, self.restrict_rule_dict[tmp_det_key][0])
+                        self.pre_res_con_num = self.pre_res_con_num + 1
+                    if self.restrict_rule_dict[tmp_det_key].has_key(1) :
+                        self.pre_res_con[self.pre_res_con_num] = scan_default_con(self, tmp_det_key, self.restrict_rule_dict[tmp_det_key][1])
+                        self.pre_res_con_num = self.pre_res_con_num + 1
+                if self.meas_grp_var_dict[tmp_det_key]['opt_bit'] == 1 :
+                    if not(self.total_opt_str) :
+                        self.total_opt_str = self.total_opt_str + ' + '
+                    self.total_opt_str = self.total_opt_str + scan_default_opt(self, tmp_det_key, self.opt_rule_dict[tmp_det_key])
+        for tmp_rule_detail_id in self.restrict_add_rule_dict :
+            self.pre_res_con[self.pre_res_con_num] = scan_custom_rule(self, self.restrict_add_rule_dict[tmp_rule_detail_id])
+            self.pre_res_con_num = self.pre_res_con_num + 1
+        for tmp_rule_detail_id in self.opt_add_rule_dict :
+            if not(self.total_opt_str) :
+                self.total_opt_str = self.total_opt_str + ' + '
+            self.total_opt_str = self.total_opt_str + scan_custom_rule(self, self.opt_add_rule_dict[tmp_rule_detail_id])
+
+        return 0
