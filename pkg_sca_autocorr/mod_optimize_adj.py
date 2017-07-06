@@ -10,7 +10,12 @@ import io
 import csv
 import re
 
+import numpy
+import scipy.optimize as sciopt
+from sympy.utilities import lambdify
+from sympy.utilities.iterables import flatten
 from sympy import symbols
+from sympy.core.sympify import kernS
 
 
 def trim_bracket(t_ori_str) :
@@ -139,11 +144,11 @@ class ClsOptAdj(object) :
     def add_rule_con_var(self, t_rule_str) :
         
         tmp_rule_str = str(t_rule_str)
-        all_op_vars = re.findall(r'(x)([0-9]*)(act|nom|low|upp|dif|exc)', tmp_delta_expr)
-        for tmp_op_var in all_op_vars :
-            tmp_var = tmp_op_var[0] + tmp_op_var[1] + tmp_op_var[2]
-            tmp_det_id = int(tmp_op_var[1])
-            tmp_sym_name = 'symbols_' + tmp_op_var[2]
+        all_con_vars = re.findall(r'(x)([0-9]*)(act|nom|low|upp|dif|exc)', tmp_rule_str)
+        for tmp_con_var in all_con_vars :
+            tmp_var = tmp_con_var[0] + tmp_con_var[1] + tmp_con_var[2]
+            tmp_det_id = int(tmp_con_var[1])
+            tmp_sym_name = 'symbols_' + tmp_con_var[2]
             tmp_exist_bit = 0
             for tmp_id in self.pre_con_var :
                 if str(self.pre_con_var[tmp_id].name) == tmp_var :
@@ -183,7 +188,24 @@ class ClsOptAdj(object) :
     def scan_custom_rule(self, t_rule_expr) :
         
         curr_rule_str = str(t_rule_expr)
-        tmp_act_var = re.search(r'(x)([0-9]*)(act)', curr_rule_str)
+        tmp_rule_str = ''
+        tmp_ma_obj = re.search(r'(x)([0-9]*)(act)', curr_rule_str)
+        while tmp_ma_obj is not None :
+            beg_pos = tmp_ma_obj.span()[0]
+            end_pos = tmp_ma_obj.span()[1]
+            tmp_det_id = int(tmp_ma_obj.group(2))
+            if self.meas_grp_var_dict[tmp_det_id].has_key('delta_op_adj_expr') :
+                tmp_new_act = ( '(' + self.meas_grp_var_dict[tmp_det_id]['symbols_act'].name
+                               + ' + (' + self.meas_grp_var_dict[tmp_det_id]['delta_op_adj_expr'] + '))' )
+            else :
+                tmp_new_act = tmp_ma_obj.group(0)
+            tmp_rule_str = tmp_rule_str + curr_rule_str[0:beg_pos] + tmp_new_act
+            curr_rule_str = curr_rule_str[end_pos:]
+            tmp_ma_obj = re.search(r'(x)([0-9]*)(act)', curr_rule_str)
+        tmp_rule_str = tmp_rule_str + curr_rule_str
+        add_rule_con_var(self, tmp_rule_str)
+        add_pre_var(self, tmp_rule_str)
+        return '(' + tmp_rule_str + ')'
 
     def opt_res_grp(self, t_res_grp_id) :
 
@@ -347,5 +369,13 @@ class ClsOptAdj(object) :
             if not(self.total_opt_str) :
                 self.total_opt_str = self.total_opt_str + ' + '
             self.total_opt_str = self.total_opt_str + scan_custom_rule(self, self.opt_add_rule_dict[tmp_rule_detail_id])
+
+        self.vars_list = []
+        for i in range(0,self.pre_var_num) :
+            self.vars_list.append(self.pre_var[i])
+        for i in range(0,self.pre_con_var_num) :
+            self.vars_list.append(self.pre_con_var[i])
+        self.total_opt_expr = kernS(self.total_opt_str)
+        self.func_opt_expr = lambdify(flatten(self.vars_list), self.total_opt_expr, 'numpy')
 
         return 0
