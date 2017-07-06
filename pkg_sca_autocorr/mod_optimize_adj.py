@@ -145,17 +145,28 @@ class ClsOptAdj(object) :
         
         tmp_rule_str = str(t_rule_str)
         all_con_vars = re.findall(r'(x)([0-9]*)(act|nom|low|upp|dif|exc)', tmp_rule_str)
+        val_name_dict = {}
+        val_name_dict['act'] = 'act_field_value'
+        val_name_dict['nom'] = 'nom_field_value'
+        val_name_dict['low'] = 'lowertol_field_value'
+        val_name_dict['upp'] = 'uppertol_field_value'
+        val_name_dict['dif'] = 'diff_field_value'
+        val_name_dict['exc'] = 'exceed_field_value'
         for tmp_con_var in all_con_vars :
             tmp_var = tmp_con_var[0] + tmp_con_var[1] + tmp_con_var[2]
             tmp_det_id = int(tmp_con_var[1])
             tmp_sym_name = 'symbols_' + tmp_con_var[2]
+            tmp_sym_val = val_name_dict[tmp_con_var[2]]
             tmp_exist_bit = 0
             for tmp_id in self.pre_con_var :
-                if str(self.pre_con_var[tmp_id].name) == tmp_var :
+                if str(self.pre_con_var[tmp_id]['sym_obj'].name) == tmp_var :
                     tmp_exist_bit = 1
                     break
             if tmp_exist_bit == 0 :
-                self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key][tmp_sym_name]
+                tmp_sig_data = {}
+                tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key][tmp_sym_name]
+                tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key][tmp_sym_val]
+                self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
                 self.pre_con_var_num + self.pre_con_var_num + 1
 
     def scan_default_con(self, t_det_key, t_rule_expr) :
@@ -165,13 +176,22 @@ class ClsOptAdj(object) :
         add_pre_var(self, tmp_delta_str)
         new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
         tmp_rule_expr.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
-        self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_act']
+        tmp_sig_data = {}
+        tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_act']
+        tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['act_field_value']
+        self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
         self.pre_con_var_num = self.pre_con_var_num + 1
         if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_low'].name)>=0 :
-            self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_low']
+            tmp_sig_data = {}
+            tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_low']
+            tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['lowertol_field_value']
+            self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
             self.pre_con_var_num = self.pre_con_var_num + 1
         if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_upp'].name)>=0 :
-            self.pre_con_var[self.pre_con_var_num] = self.meas_grp_var_dict[t_det_key]['symbols_upp']
+            tmp_sig_data = {}
+            tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_upp']
+            tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['uppertol_field_value']
+            self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
             self.pre_con_var_num = self.pre_con_var_num + 1
         return tmp_rule_expr
 
@@ -374,8 +394,36 @@ class ClsOptAdj(object) :
         for i in range(0,self.pre_var_num) :
             self.vars_list.append(self.pre_var[i])
         for i in range(0,self.pre_con_var_num) :
-            self.vars_list.append(self.pre_con_var[i])
+            self.vars_list.append(self.pre_con_var[i]['sym_obj'])
         self.total_opt_expr = kernS(self.total_opt_str)
         self.func_opt_expr = lambdify(flatten(self.vars_list), self.total_opt_expr, 'numpy')
+        self.func_con_list = []
+        for i in range(0,self.pre_res_con_num) :
+            tmp_expr = kernS(self.pre_res_con[i])
+            tmp_func = lambdify(flatten(self.vars_list), tmp_expr, 'numpy')
+            self.func_con_list.append(tmp_func)
+
+        opt_cons = []
+        for i in range(0,self.pre_res_con_num) :
+            tmp_dyn_func_str = '''
+def tmp_g(X) :
+    RX = X
+    for j in range(0,self.pre_con_var_num) :
+        RX.append(self.pre_con_var[j]['sym_val'])
+    return self.func_con_list[''' + str(i) +'](*flatten(RX))\n'
+            exec(tmp_dyn_func_str)
+            exec('tmp_sig_con = dict(type=\'ineq\', fun=tmp_g)')
+            exec('opt_cons.append(tmp_sig_con)')
+            
+        def tmp_f(X) :
+            RX = X
+            for j in range(0,self.pre_con_var_num) :
+                RX.append(self.pre_con_var[j]['sym_val'])
+            return self.func_opt_expr(*flatten(RX))
+
+        init_val = []
+        for i in range(0,self.pre_var_num) :
+            init_val.append(0)
+        self.opt_res = sciopt.minimize(tmp_f, init_val, method='SLSQP', constraints=opt_cons)
 
         return 0
