@@ -164,8 +164,8 @@ class ClsOptAdj(object) :
                     break
             if tmp_exist_bit == 0 :
                 tmp_sig_data = {}
-                tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key][tmp_sym_name]
-                tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key][tmp_sym_val]
+                tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[tmp_det_id][tmp_sym_name]
+                tmp_sig_data['sym_val'] = self.meas_grp_var_dict[tmp_det_id][tmp_sym_val]
                 self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
                 self.pre_con_var_num + self.pre_con_var_num + 1
 
@@ -214,7 +214,7 @@ class ClsOptAdj(object) :
             beg_pos = tmp_ma_obj.span()[0]
             end_pos = tmp_ma_obj.span()[1]
             tmp_det_id = int(tmp_ma_obj.group(2))
-            if self.meas_grp_var_dict[tmp_det_id].has_key('delta_op_adj_expr') :
+            if 'delta_op_adj_expr' in self.meas_grp_var_dict[tmp_det_id] :
                 tmp_new_act = ( '(' + self.meas_grp_var_dict[tmp_det_id]['symbols_act'].name
                                + ' + (' + self.meas_grp_var_dict[tmp_det_id]['delta_op_adj_expr'] + '))' )
             else :
@@ -332,6 +332,7 @@ class ClsOptAdj(object) :
         tmp_rp = self.m_conn.execute(tmp_sql)
         self.op_adj_dict = cl.OrderedDict()
         for tmp_rec in tmp_rp :
+            tmp_sig_row = {}
             tmp_sig_row['op_adj_id'] = tmp_rec.op_adj_id
             tmp_sig_row['op_code_str'] = tmp_rec.op_code_str
             tmp_sig_row['op_detail_type'] = tmp_rec.op_detail_type
@@ -370,12 +371,12 @@ class ClsOptAdj(object) :
         # 优化目标字符串表达式
         self.total_opt_str = ''
         for tmp_det_key in self.meas_grp_var_dict :
-            if self.meas_grp_var_dict[t_det_key].has_key('delta_op_adj_expr') :
+            if 'delta_op_adj_expr' in self.meas_grp_var_dict[tmp_det_key] :
                 if self.meas_grp_var_dict[tmp_det_key]['restrict_bit'] == 1 :
-                    if self.restrict_rule_dict[tmp_det_key].has_key(0) :
+                    if 0 in self.restrict_rule_dict[tmp_det_key] :
                         self.pre_res_con[self.pre_res_con_num] = self.scan_default_con(tmp_det_key, self.restrict_rule_dict[tmp_det_key][0])
                         self.pre_res_con_num = self.pre_res_con_num + 1
-                    if self.restrict_rule_dict[tmp_det_key].has_key(1) :
+                    if 1 in self.restrict_rule_dict[tmp_det_key] :
                         self.pre_res_con[self.pre_res_con_num] = self.scan_default_con(tmp_det_key, self.restrict_rule_dict[tmp_det_key][1])
                         self.pre_res_con_num = self.pre_res_con_num + 1
                 if self.meas_grp_var_dict[tmp_det_key]['opt_bit'] == 1 :
