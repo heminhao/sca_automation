@@ -15,7 +15,7 @@ import scipy.optimize as sciopt
 from sympy.utilities import lambdify
 from sympy.utilities.iterables import flatten
 from sympy import symbols
-from sympy.core.sympify import kernS
+from sympy.parsing.sympy_parser import parse_expr
 
 
 def trim_bracket(t_ori_str) :
@@ -380,7 +380,7 @@ class ClsOptAdj(object) :
                         self.pre_res_con[self.pre_res_con_num] = self.scan_default_con(tmp_det_key, self.restrict_rule_dict[tmp_det_key][1])
                         self.pre_res_con_num = self.pre_res_con_num + 1
                 if self.meas_grp_var_dict[tmp_det_key]['opt_bit'] == 1 :
-                    if not(self.total_opt_str) :
+                    if self.total_opt_str :
                         self.total_opt_str = self.total_opt_str + ' + '
                     self.total_opt_str = self.total_opt_str + self.scan_default_opt(tmp_det_key, self.opt_rule_dict[tmp_det_key])
         for tmp_rule_detail_id in self.restrict_add_rule_dict :
@@ -396,11 +396,11 @@ class ClsOptAdj(object) :
             self.vars_list.append(self.pre_var[i])
         for i in range(0,self.pre_con_var_num) :
             self.vars_list.append(self.pre_con_var[i]['sym_obj'])
-        self.total_opt_expr = kernS(self.total_opt_str)
+        self.total_opt_expr = parse_expr(self.total_opt_str)
         self.func_opt_expr = lambdify(flatten(self.vars_list), self.total_opt_expr, 'numpy')
         self.func_con_list = []
         for i in range(0,self.pre_res_con_num) :
-            tmp_expr = kernS(self.pre_res_con[i])
+            tmp_expr = parse_expr(self.pre_res_con[i])
             tmp_func = lambdify(flatten(self.vars_list), tmp_expr, 'numpy')
             self.func_con_list.append(tmp_func)
 
