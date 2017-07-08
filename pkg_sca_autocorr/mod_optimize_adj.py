@@ -141,6 +141,20 @@ class ClsOptAdj(object) :
                     self.pre_var[self.pre_var_num] = self.op_adj_dict[tmp_op_adj_key]['symbols_adj']
                     self.pre_var_num = self.pre_var_num + 1
 
+    def add_sig_con_var(self, t_sym_obj, t_sym_val) :
+        
+        tmp_exist_bit = 0
+        for tmp_id in self.pre_con_var :
+            if str(self.pre_con_var[tmp_id]['sym_obj'].name) == t_sym_obj.name :
+                tmp_exist_bit = 1
+                break
+        if tmp_exist_bit == 0 :
+            tmp_sig_data = {}
+            tmp_sig_data['sym_obj'] = t_sym_obj
+            tmp_sig_data['sym_val'] = t_sym_val
+            self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
+            self.pre_con_var_num = self.pre_con_var_num + 1
+    
     def add_rule_con_var(self, t_rule_str) :
         
         tmp_rule_str = str(t_rule_str)
@@ -153,21 +167,10 @@ class ClsOptAdj(object) :
         val_name_dict['dif'] = 'diff_field_value'
         val_name_dict['exc'] = 'exceed_field_value'
         for tmp_con_var in all_con_vars :
-            tmp_var = tmp_con_var[0] + tmp_con_var[1] + tmp_con_var[2]
             tmp_det_id = int(tmp_con_var[1])
             tmp_sym_name = 'symbols_' + tmp_con_var[2]
             tmp_sym_val = val_name_dict[tmp_con_var[2]]
-            tmp_exist_bit = 0
-            for tmp_id in self.pre_con_var :
-                if str(self.pre_con_var[tmp_id]['sym_obj'].name) == tmp_var :
-                    tmp_exist_bit = 1
-                    break
-            if tmp_exist_bit == 0 :
-                tmp_sig_data = {}
-                tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[tmp_det_id][tmp_sym_name]
-                tmp_sig_data['sym_val'] = self.meas_grp_var_dict[tmp_det_id][tmp_sym_val]
-                self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
-                self.pre_con_var_num + self.pre_con_var_num + 1
+            self.add_sig_con_var(self.meas_grp_var_dict[tmp_det_id][tmp_sym_name], self.meas_grp_var_dict[tmp_det_id][tmp_sym_val])
 
     def scan_default_con(self, t_det_key, t_rule_expr) :
         
@@ -176,23 +179,12 @@ class ClsOptAdj(object) :
         self.add_pre_var(tmp_delta_str)
         new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
         tmp_rule_expr = tmp_rule_expr.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
-        tmp_sig_data = {}
-        tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_act']
-        tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['act_field_value']
-        self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
-        self.pre_con_var_num = self.pre_con_var_num + 1
+        self.add_sig_con_var(self.meas_grp_var_dict[t_det_key]['symbols_act'], self.meas_grp_var_dict[t_det_key]['act_field_value'])
+        self.add_sig_con_var(self.meas_grp_var_dict[t_det_key]['symbols_nom'], self.meas_grp_var_dict[t_det_key]['nom_field_value'])
         if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_low'].name)>=0 :
-            tmp_sig_data = {}
-            tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_low']
-            tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['lowertol_field_value']
-            self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
-            self.pre_con_var_num = self.pre_con_var_num + 1
+            self.add_sig_con_var(self.meas_grp_var_dict[t_det_key]['symbols_low'], self.meas_grp_var_dict[t_det_key]['lowertol_field_value'])
         if tmp_rule_expr.find(self.meas_grp_var_dict[t_det_key]['symbols_upp'].name)>=0 :
-            tmp_sig_data = {}
-            tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_upp']
-            tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['uppertol_field_value']
-            self.pre_con_var[self.pre_con_var_num] = tmp_sig_data
-            self.pre_con_var_num = self.pre_con_var_num + 1
+            self.add_sig_con_var(self.meas_grp_var_dict[t_det_key]['symbols_upp'], self.meas_grp_var_dict[t_det_key]['uppertol_field_value'])
         return tmp_rule_expr
 
     def scan_default_opt(self, t_det_key, t_rule_expr) :
