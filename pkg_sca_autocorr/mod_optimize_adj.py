@@ -104,7 +104,7 @@ class ClsOptAdj(object) :
                 tmp_det_id = self.find_det_id(tmp_sig)
                 if tmp_det_id == 0 :
                     e.g_exp.raise_exp_data('EN00005')
-                curr_rule_str.replace(tmp_var, self.meas_grp_var_dict[tmp_det_id][rep_str_list[i]].name, 1)
+                curr_rule_str = curr_rule_str.replace(tmp_var, self.meas_grp_var_dict[tmp_det_id][rep_str_list[i]].name, 1)
         return curr_rule_str
         
     def del_default_rule(self, t_rule_detail_type, t_rule_str) :
@@ -175,7 +175,7 @@ class ClsOptAdj(object) :
         tmp_delta_str = str(self.meas_grp_var_dict[t_det_key]['delta_op_adj_expr'])
         self.add_pre_var(tmp_delta_str)
         new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
-        tmp_rule_expr.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
+        tmp_rule_expr = tmp_rule_expr.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
         tmp_sig_data = {}
         tmp_sig_data['sym_obj'] = self.meas_grp_var_dict[t_det_key]['symbols_act']
         tmp_sig_data['sym_val'] = self.meas_grp_var_dict[t_det_key]['act_field_value']
@@ -201,7 +201,7 @@ class ClsOptAdj(object) :
         tmp_delta_str = str(self.meas_grp_var_dict[t_det_key]['delta_op_adj_expr'])
         self.add_pre_var(tmp_delta_str)
         new_act_var = '(' + self.meas_grp_var_dict[t_det_key]['symbols_act'].name + ' + (' + tmp_delta_str + '))'
-        tmp_rule_str.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
+        tmp_rule_str = tmp_rule_str.replace(self.meas_grp_var_dict[t_det_key]['symbols_act'].name, new_act_var, 1)
         self.add_rule_con_var(tmp_rule_str)
         return '(' + str(self.meas_grp_var_dict[t_det_key]['key_field_opt_weight']) + '*(' + tmp_rule_str + '))'
 
@@ -356,7 +356,7 @@ class ClsOptAdj(object) :
             all_op_vars = re.findall(r'(D)(\[[a-zA-Z0-9_]*\])', tmp_delta_expr)
             for tmp_op_var in all_op_vars :
                 tmp_op_adj_id = self.find_op_adj_id(tmp_op_var[1])
-                tmp_delta_expr.replace(tmp_op_var[0]+tmp_op_var[1], self.op_adj_dict[tmp_op_adj_id]['symbols_adj'].name, 1)
+                tmp_delta_expr = tmp_delta_expr.replace(tmp_op_var[0]+tmp_op_var[1], self.op_adj_dict[tmp_op_adj_id]['symbols_adj'].name, 1)
             self.meas_grp_var_dict[tmp_det_id]['delta_op_adj_expr'] = tmp_delta_expr
         
         # 优化约束条件字典
@@ -391,6 +391,7 @@ class ClsOptAdj(object) :
                 self.total_opt_str = self.total_opt_str + ' + '
             self.total_opt_str = self.total_opt_str + self.scan_custom_rule(self.opt_add_rule_dict[tmp_rule_detail_id])
 
+        from sympy.utilities.iterables import flatten
         self.vars_list = []
         for i in range(0,self.pre_var_num) :
             self.vars_list.append(self.pre_var[i])
