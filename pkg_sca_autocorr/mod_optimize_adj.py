@@ -408,16 +408,16 @@ class ClsOptAdj(object) :
         for i in range(0,self.pre_res_con_num) :
             tmp_dyn_func_str = '''
 def tmp_g(X) :
-    RX = X
+    RX = list(X)
     for j in range(0,self.pre_con_var_num) :
         RX.append(self.pre_con_var[j]['sym_val'])
-    return self.func_con_list[''' + str(i) +'](*flatten(RX))\n'
-            exec(tmp_dyn_func_str)
+    return self.func_con_list[''' + str(i) + '](*flatten(RX))\n'
+            exec(tmp_dyn_func_str, locals())
             exec('tmp_sig_con = dict(type=\'ineq\', fun=tmp_g)')
             exec('opt_cons.append(tmp_sig_con)')
             
         def tmp_f(X) :
-            RX = X
+            RX = list(X)
             for j in range(0,self.pre_con_var_num) :
                 RX.append(self.pre_con_var[j]['sym_val'])
             return self.func_opt_expr(*flatten(RX))
