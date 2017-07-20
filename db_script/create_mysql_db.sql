@@ -177,6 +177,9 @@ CREATE TABLE `sca_op_prg_def` (
 CREATE TABLE `sca_meas_res_type_def` (
   `meas_res_type_id` int(11) NOT NULL, #测量结果类型ID
   `meas_res_type_desc` varchar(500) COLLATE utf8_unicode_ci DEFAULT NULL, #测量结果类型描述
+  # 以下测量结果格式ID，可以取如下值：
+  # 1：代表ZEISS设备输出的以tab分隔的带标题行的文本文件
+  # 2：代表海克斯康三坐标测量仪输出的PDF格式的PC-DMIS文件
   `meas_res_format_id` int(11) DEFAULT NULL, #测量结果格式ID，目前先填1，代表以tab分隔的带标题行的文件
   `meas_prg_id` int(11) DEFAULT NULL, #测量程序ID
   `key_field_col_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL, #测量条目字段ID
